@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LTD OS — ลงทุน Diary</title>
+<style>
+  :root{
+    --bg:#0f1117;
+    --panel:#1a1d27;
+    --accent:#6c63ff;
+    --glow:#00e5ff;
+    --text:#e2e8f0;
+    --text2:#8892a4;
+    --floor:#2a2d3e;
+    --desk:#3d4166;
+    --carpet:#252837;
+    --green:#22c55e;
+    --red:#ef4444;
+    --border:rgba(255,255,255,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Segoe UI",Tahoma,"Sarabun",system-ui,sans-serif;
+    overflow:hidden;
+  }
+  /* ---------- Top bar ---------- */
+  .topbar{
+    height:48px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 18px;background:var(--panel);border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
+  .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 12px var(--accent)}
+  .brand small{color:var(--text2);font-weight:400;font-size:12px}
+  .clock{font-variant-numeric:tabular-nums;font-size:15px;color:var(--glow);
+    text-shadow:0 0 8px rgba(0,229,255,.4);font-weight:600}
+
+  /* ---------- App grid ---------- */
+  .app{
+    display:grid;
+    grid-template-columns:270px 1fr 270px;
+    grid-template-rows:1fr 160px;
+    grid-template-areas:"left center right" "left log right";
+    gap:12px;padding:12px;height:calc(100% - 48px);
+  }
+  .panel{
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    padding:14px;overflow:auto;
+  }
+  .left{grid-area:left}
+  .center{grid-area:center;position:relative;overflow:hidden;
+    background:radial-gradient(circle at 50% 35%,#171a24,#0f1117 75%);}
+  .right{grid-area:right}
+  .log{grid-area:log}
+
+  h3.sec{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--text2);margin:14px 0 8px;font-weight:700}
+  h3.sec:first-child{margin-top:0}
+
+  .team-name{font-size:18px;font-weight:800;background:linear-gradient(90deg,#fff,var(--accent));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .today-date{color:var(--text2);font-size:13px;margin-top:2px}
+
+  .stopped{margin-top:12px;font-size:13px;color:var(--text2)}
+  .stopped b{color:var(--text)}
+
+  ul.focus{list-style:none;font-size:13px;line-height:1.7}
+  ul.focus li{padding-left:16px;position:relative;color:var(--text)}
+  ul.focus li::before{content:"•";position:absolute;left:0;color:var(--accent);font-weight:800}
+
+  .stats{display:flex;gap:8px;margin-top:6px}
+  .stat{flex:1;background:var(--carpet);border:1px solid var(--border);border-radius:10px;
+    padding:8px;text-align:center}
+  .stat .n{font-size:20px;font-weight:800}
+  .stat .l{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+  .stat.active .n{color:var(--glow)}
+  .stat.idle .n{color:var(--text2)}
+  .stat.done .n{color:var(--green)}
+
+  .progress-wrap{margin-top:6px}
+  .progress-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:5px}
+  .progress{height:8px;background:var(--carpet);border-radius:6px;overflow:hidden}
+  .progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--glow));
+    transition:width .6s ease}
+
+  /* ---------- Right panel board ---------- */
+  .board .row{display:flex;justify-content:space-between;font-size:13px;
+    padding:6px 0;border-bottom:1px dashed var(--border)}
+  .board .row:last-child{border-bottom:none}
+  .board .row b{color:var(--glow);font-variant-numeric:tabular-nums}
+
+  .watch .w{display:flex;justify-content:space-between;align-items:center;
+    font-size:13px;padding:7px 0;border-bottom:1px dashed var(--border)}
+  .watch .w:last-child{border-bottom:none}
+  .watch .tk{font-weight:700}
+  .watch .px{color:var(--text2);font-variant-numeric:tabular-nums}
+  .watch .chg{font-weight:700;font-variant-numeric:tabular-nums;min-width:62px;text-align:right}
+  .up{color:var(--green)} .down{color:var(--red)}
+
+  .btn{display:block;width:100%;margin-top:14px;padding:11px;border:none;border-radius:10px;
+    background:var(--accent);color:#fff;font-weight:700;font-size:14px;cursor:pointer;
+    transition:.2s;box-shadow:0 4px 18px rgba(108,99,255,.35)}
+  .btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+  .btn.ghost{background:transparent;border:1px solid var(--accent);color:var(--accent);
+    box-shadow:none}
+  .btn.ghost:hover{background:rgba(108,99,255,.12)}
+
+  /* ---------- Activity log ---------- */
+  .log h3{margin-bottom:8px}
+  .log-list{font-size:13px;line-height:1.5}
+  .log-item{display:flex;gap:10px;padding:5px 0;border-bottom:1px dashed var(--border);
+    animation:fadein .4s ease}
+  .log-item .t{color:var(--text2);font-variant-numeric:tabular-nums;min-width:46px}
+  .log-item .a{color:var(--accent);font-weight:700;min-width:54px}
+  @keyframes fadein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+  /* ---------- Isometric office ---------- */
+  .scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    perspective:1400px}
+  .room{
+    position:relative;width:520px;height:520px;
+    transform-style:preserve-3d;
+    transform:rotateX(60deg) rotateZ(45deg) scale(.92);
+  }
+  .floor{position:absolute;inset:0;background:var(--floor);border-radius:10px;
+    box-shadow:0 0 0 2px rgba(255,255,255,.04) inset;}
+  .zone{position:absolute;border-radius:8px;opacity:.55;}
+  .zone .ztag{position:absolute;top:6px;left:10px;font-size:11px;font-weight:800;
+    letter-spacing:1px;color:rgba(255,255,255,.85);
+    transform:rotateZ(-45deg) rotateX(-60deg);transform-origin:left top;
+    opacity:.9}
+  .zone.alpha{left:0;top:0;width:100%;height:33.3%;background:#3a2f5e}
+  .zone.beta{left:0;top:33.3%;width:100%;height:33.3%;background:#234a5e}
+  .zone.gamma{left:0;top:66.6%;width:100%;height:33.4%;background:#2f5e3a}
+
+  /* whiteboard on back wall */
+  .whiteboard{position:absolute;left:50%;top:-60px;transform:translateX(-50%) rotateX(-90deg);
+    transform-origin:bottom center;width:300px;height:70px;background:#e8eaf0;border-radius:6px;
+    box-shadow:0 0 0 6px #20222e;display:flex;align-items:center;justify-content:center;
+    color:#2a2d3e;font-weight:800;font-size:13px;letter-spacing:.5px}
+  .whiteboard span{font-size:11px;color:#555;font-weight:600}
+
+  /* plant in corner */
+  .plant{position:absolute;width:30px;height:30px;border-radius:50%;
+    background:radial-gradient(circle at 40% 30%,#4ade80,#15803d);
+    box-shadow:0 14px 0 -4px #5b3a1a;}
+  .plant.p1{right:6px;top:6px}
+  .plant.p2{left:6px;bottom:6px}
+
+  /* desks + agents */
+  .desk{position:absolute;width:46px;height:30px;background:var(--desk);border-radius:5px;
+    transform:translate(-50%,-50%);box-shadow:0 4px 0 rgba(0,0,0,.35);
+    display:flex;align-items:center;justify-content:center;}
+  .agent{
+    position:absolute;left:50%;top:-14px;transform:translateX(-50%);
+    width:26px;height:26px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;
+    background:#4b5072;border:2px solid rgba(255,255,255,.18);
+    transition:.3s;
+    /* keep upright-ish against the room tilt */
+    transform:translateX(-50%) rotateZ(-45deg) rotateX(-60deg);
+  }
+  .agent .nm{position:absolute;top:-16px;left:50%;transform:translateX(-50%);
+    font-size:9px;font-weight:700;color:var(--text);white-space:nowrap;
+    background:rgba(15,17,23,.7);padding:1px 4px;border-radius:4px}
+  .agent .ck{position:absolute;right:-6px;bottom:-6px;font-size:10px;display:none}
+
+  .agent.idle{opacity:.45}
+  .agent.working{background:var(--accent);
+    box-shadow:0 0 10px var(--glow),0 0 22px var(--glow);
+    border-color:var(--glow);animation:pulse 1.4s infinite ease-in-out}
+  .agent.done{background:#1f6f43;border-color:var(--green)}
+  .agent.done .ck{display:block}
+  @keyframes pulse{0%,100%{box-shadow:0 0 8px var(--glow),0 0 16px var(--glow)}
+    50%{box-shadow:0 0 16px var(--glow),0 0 34px var(--glow)}}
+
+  /* tooltip */
+  .tip{position:fixed;z-index:50;pointer-events:none;background:#11131b;
+    border:1px solid var(--accent);border-radius:8px;padding:7px 10px;font-size:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;max-width:200px}
+  .tip b{color:var(--glow)}
+  .tip .tt{color:var(--text2);font-size:11px}
+
+  /* popup */
+  .popup{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.55);z-index:60}
+  .popup .card{background:var(--panel);border:1px solid var(--accent);border-radius:14px;
+    padding:22px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .popup .card h4{font-size:16px;margin-bottom:4px}
+  .popup .card .team{color:var(--text2);font-size:12px;margin-bottom:12px}
+  .popup .card .task{background:var(--carpet);border-radius:8px;padding:12px;font-size:14px;
+    border-left:3px solid var(--glow)}
+  .popup .card .stt{margin-top:10px;font-size:12px;color:var(--text2)}
+
+  .scene-label{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+    font-size:11px;color:var(--text2);letter-spacing:1px}
+
+  /* ---------- Responsive ---------- */
+  @media(max-width:768px){
+    .app{grid-template-columns:1fr;grid-template-rows:auto 1fr 150px;
+      grid-template-areas:"left" "center" "log"}
+    .right{display:none}
+    .room{transform:rotateX(58deg) rotateZ(45deg) scale(.66)}
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      ลงทุน Diary <small>— LTD OS</small>
+    </div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+
+  <div class="app">
+    <!-- LEFT PANEL -->
+    <aside class="panel left">
+      <div class="team-name">ลงทุน Diary</div>
+      <div class="today-date" id="todayDate"></div>
+
+      <div class="stopped">This week: <b id="stoppedCount">3</b> of 8 stopped</div>
+
+      <h3 class="sec">โฟกัสวันนี้ · Today's Focus</h3>
+      <ul class="focus">
+        <li>รัน earnings cluster: AVGO / CRWD / RBRK</li>
+        <li>Weekly Review ค้างส่ง — สรุป 2026-W22</li>
+        <li>WATCHLIST: 1 รายการครบกำหนดใน 7 วัน</li>
+      </ul>
+
+      <h3 class="sec">สถิติเอเจนต์ · Agents</h3>
+      <div class="stats">
+        <div class="stat active"><div class="n" id="cActive">0</div><div class="l">Active</div></div>
+        <div class="stat idle"><div class="n" id="cIdle">0</div><div class="l">Idle</div></div>
+        <div class="stat done"><div class="n" id="cDone">0</div><div class="l">Done</div></div>
+      </div>
+
+      <h3 class="sec">ความคืบหน้าสัปดาห์</h3>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Week Progress</span><span id="pgLabel">0%</span></div>
+        <div class="progress"><div id="pgBar"></div></div>
+      </div>
+
+      <button class="btn" id="startDay">▶ เริ่มวันใหม่ · Start Day</button>
+    </aside>
+
+    <!-- ISOMETRIC CENTER -->
+    <main class="panel center">
+      <div class="scene">
+        <div class="room" id="room">
+          <div class="floor"></div>
+          <div class="zone alpha"><span class="ztag">TEAM ALPHA · นักวิเคราะห์</span></div>
+          <div class="zone beta"><span class="ztag">TEAM BETA · นักลงทุน</span></div>
+          <div class="zone gamma"><span class="ztag">TEAM GAMMA · ปฏิบัติการ</span></div>
+          <div class="whiteboard">LTD OS<br><span>2026 · W22 Board</span></div>
+          <div class="plant p1"></div>
+          <div class="plant p2"></div>
+          <!-- desks injected by JS -->
+        </div>
+      </div>
+      <div class="scene-label">ISOMETRIC OFFICE · คลิกเอเจนต์เพื่อดูงาน</div>
+    </main>
+
+    <!-- RIGHT PANEL -->
+    <aside class="panel right">
+      <h3 class="sec">สถานะบอร์ด · Board Status</h3>
+      <div class="board">
+        <div class="row"><span>Awaiting Review</span><b id="bReview">0</b></div>
+        <div class="row"><span>In Progress</span><b id="bProgress">0</b></div>
+        <div class="row"><span>Team Inbox</span><b id="bInbox">0</b></div>
+        <div class="row"><span>Open Questions</span><b id="bQuestions">0</b></div>
+        <div class="row"><span>Open Decisions</span><b id="bDecisions">0</b></div>
+        <div class="row"><span>Scheduled</span><b id="bScheduled">0</b></div>
+      </div>
+
+      <h3 class="sec">Watchlist หุ้น · Crypto</h3>
+      <div class="watch" id="watch"></div>
+
+      <button class="btn ghost" id="talkCloudy">💬 Talk to Cloudy</button>
+    </aside>
+
+    <!-- BOTTOM LOG -->
+    <section class="panel log">
+      <h3 class="sec">บันทึกกิจกรรม · Activity Log</h3>
+      <div class="log-list" id="logList"></div>
+    </section>
+  </div>
+
+  <div class="tip" id="tip"></div>
+
+  <div class="popup" id="popup">
+    <div class="card">
+      <h4 id="puName"></h4>
+      <div class="team" id="puTeam"></div>
+      <div class="task"><span id="puTaskLabel">กำลังทำ:</span> <span id="puTask"></span></div>
+      <div class="stt" id="puStatus"></div>
+      <button class="btn" id="puClose" style="margin-top:16px">ปิด</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Agent data ---------- */
+  const AGENTS = [
+    {id:0, name:"Cloudy", team:"ALPHA", emoji:"☁️", task:"วิเคราะห์หุ้น SET"},
+    {id:1, name:"Paint",  team:"ALPHA", emoji:"🎨", task:"สร้าง Infographic รายสัปดาห์"},
+    {id:2, name:"Nawy",   team:"ALPHA", emoji:"📰", task:"ติดตามข่าว Macro"},
+    {id:3, name:"Flower", team:"ALPHA", emoji:"🌸", task:"สรุป Earning Reports"},
+    {id:4, name:"Indi",   team:"BETA",  emoji:"₿",  task:"ดู Port Crypto (BTC/SOL)"},
+    {id:5, name:"Vero",   team:"BETA",  emoji:"📈", task:"ติดตาม ETF / Index Fund"},
+    {id:6, name:"Chris",  team:"BETA",  emoji:"🚀", task:"วิเคราะห์ US Growth Stocks"},
+    {id:7, name:"Dave",   team:"BETA",  emoji:"🛡️", task:"Risk Management"},
+    {id:8, name:"Hovu",   team:"GAMMA", emoji:"⚙️", task:"รัน Data Pipeline"},
+    {id:9, name:"Rona",   team:"GAMMA", emoji:"🔁", task:"Backtest Strategy"},
+    {id:10,name:"Laby",   team:"GAMMA", emoji:"✉️", task:"ส่ง Newsletter รายวัน"},
+    {id:11,name:"Mico",   team:"GAMMA", emoji:"🔔", task:"Monitor Alerts"},
+    {id:12,name:"Zeta",   team:"GAMMA", emoji:"⚖️", task:"Compliance & Audit"},
+  ];
+  const TEAM_TH = {ALPHA:"ทีม ALPHA · นักวิเคราะห์", BETA:"ทีม BETA · นักลงทุน", GAMMA:"ทีม GAMMA · ปฏิบัติการ"};
+  const STATES = ["idle","working","done"];
+  const STATE_TH = {idle:"ว่าง (Idle)", working:"กำลังทำงาน (Working)", done:"เสร็จแล้ว (Done)"};
+
+  const room = document.getElementById("room");
+  const tip  = document.getElementById("tip");
+  const popup= document.getElementById("popup");
+
+  /* ---------- Layout agents into 3 zones ---------- */
+  // zone vertical bands (in % of room). cols arranged within band.
+  function layout(){
+    const teams = {ALPHA:[],BETA:[],GAMMA:[]};
+    AGENTS.forEach(a=>teams[a.team].push(a));
+    const bands = {ALPHA:[0,33.3], BETA:[33.3,66.6], GAMMA:[66.6,100]};
+    Object.keys(teams).forEach(tk=>{
+      const list = teams[tk];
+      const [y0,y1] = bands[tk];
+      const cy = (y0+y1)/2;
+      const cols = list.length;
+      list.forEach((a,i)=>{
+        const x = (i+1)/(cols+1)*100;
+        const desk = document.createElement("div");
+        desk.className = "desk";
+        desk.style.left = x + "%";
+        desk.style.top  = cy + "%";
+        const ag = document.createElement("div");
+        ag.className = "agent idle";
+        ag.dataset.id = a.id;
+        ag.innerHTML = '<span class="nm">'+a.name+'</span>'+a.emoji+'<span class="ck">✅</span>';
+        desk.appendChild(ag);
+        room.appendChild(desk);
+        a.el = ag;
+        a.state = "idle";
+      });
+    });
+  }
+  layout();
+
+  /* ---------- State helpers ---------- */
+  function setState(a, st){
+    a.state = st;
+    a.el.classList.remove("idle","working","done");
+    a.el.classList.add(st);
+    refreshStats();
+  }
+  function refreshStats(){
+    let act=0,idle=0,done=0;
+    AGENTS.forEach(a=>{ if(a.state==="working")act++; else if(a.state==="done")done++; else idle++; });
+    document.getElementById("cActive").textContent=act;
+    document.getElementById("cIdle").textContent=idle;
+    document.getElementById("cDone").textContent=done;
+    // board mock numbers loosely tied to live state
+    document.getElementById("bReview").textContent   = done;
+    document.getElementById("bProgress").textContent = act;
+    document.getElementById("bInbox").textContent    = 4 + (idle%3);
+    document.getElementById("bQuestions").textContent= 2;
+    document.getElementById("bDecisions").textContent= 1;
+    document.getElementById("bScheduled").textContent= 5;
+    // week progress = done/total
+    const pct = Math.round(done/AGENTS.length*100);
+    document.getElementById("pgBar").style.width = pct+"%";
+    document.getElementById("pgLabel").textContent = pct+"%";
+  }
+
+  /* ---------- Clock + date ---------- */
+  const TH_MONTHS=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
+    "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  function tick(){
+    const d=new Date();
+    const p=n=>String(n).padStart(2,"0");
+    document.getElementById("clock").textContent=p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());
+    document.getElementById("todayDate").textContent=
+      d.getDate()+" "+TH_MONTHS[d.getMonth()]+" "+(d.getFullYear()+543);
+  }
+  tick(); setInterval(tick,1000);
+
+  /* ---------- Activity log ---------- */
+  const logList=document.getElementById("logList");
+  const LOG_ACTIONS=[
+    "review เสร็จแล้ว ✅","macro brief อัปโหลดแล้ว","pipeline รันสำเร็จ",
+    "backtest ผ่าน 3/3 กลยุทธ์","ส่ง newsletter เรียบร้อย","พบ alert ราคาผิดปกติ ⚠️",
+    "สรุป earning report เสร็จ","อัปเดต watchlist","compliance check ผ่าน",
+    "วาด infographic เสร็จ","ปรับ risk model","sync ข้อมูล crypto"
+  ];
+  function nowHM(){const d=new Date();const p=n=>String(n).padStart(2,"0");return p(d.getHours())+":"+p(d.getMinutes());}
+  function addLog(agentName, action, t){
+    const item=document.createElement("div");
+    item.className="log-item";
+    item.innerHTML='<span class="t">'+(t||nowHM())+'</span>'+
+      '<span class="a">'+agentName+'</span><span>— '+action+'</span>';
+    logList.prepend(item);
+    while(logList.children.length>30) logList.removeChild(logList.lastChild);
+  }
+  function seedLog(){
+    logList.innerHTML="";
+    addLog("Hovu","pipeline รันสำเร็จ","09:55");
+    addLog("Nawy","macro brief อัปโหลดแล้ว","10:31");
+    addLog("Chris","review เสร็จแล้ว ✅","10:43");
+  }
+  seedLog();
+  // auto-log every 4s
+  setInterval(()=>{
+    const a=AGENTS[Math.floor(Math.random()*AGENTS.length)];
+    const act=LOG_ACTIONS[Math.floor(Math.random()*LOG_ACTIONS.length)];
+    addLog(a.name,act);
+  },4000);
+
+  /* ---------- Agent rotation every 6s ---------- */
+  setInterval(()=>{
+    const a=AGENTS[Math.floor(Math.random()*AGENTS.length)];
+    const i=STATES.indexOf(a.state);
+    setState(a, STATES[(i+1)%STATES.length]);
+  },6000);
+
+  /* ---------- Watchlist ---------- */
+  const WATCH=[
+    {tk:"AVGO", px:1842.50},
+    {tk:"PLTR", px:42.18},
+    {tk:"BTC",  px:71250},
+    {tk:"SOL",  px:168.40},
+    {tk:"RKLB", px:9.85},
+  ];
+  const watchEl=document.getElementById("watch");
+  function renderWatch(){
+    watchEl.innerHTML="";
+    WATCH.forEach(w=>{
+      const chg=(Math.random()*6-3); // -3..+3 %
+      const up=chg>=0;
+      const row=document.createElement("div");
+      row.className="w";
+      row.innerHTML='<span class="tk">'+w.tk+'</span>'+
+        '<span class="px">'+w.px.toLocaleString(undefined,{maximumFractionDigits:2})+'</span>'+
+        '<span class="chg '+(up?"up":"down")+'">'+(up?"▲":"▼")+' '+Math.abs(chg).toFixed(2)+'%</span>';
+      watchEl.appendChild(row);
+    });
+  }
+  renderWatch();
+  setInterval(renderWatch,5000);
+
+  /* ---------- Tooltip ---------- */
+  room.addEventListener("mousemove",e=>{
+    const el=e.target.closest(".agent");
+    if(!el){tip.style.display="none";return;}
+    const a=AGENTS[+el.dataset.id];
+    tip.innerHTML='<b>'+a.name+'</b><div class="tt">'+TEAM_TH[a.team]+'</div>'+
+      '<div class="tt">สถานะ: '+STATE_TH[a.state]+'</div>';
+    tip.style.display="block";
+    tip.style.left=(e.clientX+14)+"px";
+    tip.style.top =(e.clientY+14)+"px";
+  });
+  room.addEventListener("mouseleave",()=>tip.style.display="none");
+
+  /* ---------- Click agent -> popup ---------- */
+  room.addEventListener("click",e=>{
+    const el=e.target.closest(".agent");
+    if(!el)return;
+    const a=AGENTS[+el.dataset.id];
+    document.getElementById("puName").textContent=a.emoji+" "+a.name;
+    document.getElementById("puTeam").textContent=TEAM_TH[a.team];
+    document.getElementById("puTask").textContent=a.task;
+    document.getElementById("puStatus").textContent="สถานะปัจจุบัน: "+STATE_TH[a.state];
+    popup.style.display="flex";
+  });
+  document.getElementById("puClose").onclick=()=>popup.style.display="none";
+  popup.addEventListener("click",e=>{ if(e.target===popup) popup.style.display="none"; });
+
+  /* ---------- Talk to Cloudy ---------- */
+  document.getElementById("talkCloudy").onclick=()=>{
+    const c=AGENTS[0];
+    setState(c,"working");
+    document.getElementById("puName").textContent=c.emoji+" "+c.name;
+    document.getElementById("puTeam").textContent=TEAM_TH[c.team];
+    document.getElementById("puTask").textContent="สวัสดีครับ! ผม Cloudy กำลัง"+c.task+" — มีอะไรให้ช่วยวิเคราะห์ไหม?";
+    document.getElementById("puStatus").textContent="สถานะปัจจุบัน: "+STATE_TH[c.state];
+    popup.style.display="flex";
+    addLog("Cloudy","เริ่มสนทนากับผู้ใช้ 💬");
+  };
+
+  /* ---------- Start Day ---------- */
+  document.getElementById("startDay").onclick=()=>{
+    AGENTS.forEach(a=>setState(a,"idle"));
+    seedLog();
+    addLog("LTD OS","เริ่มวันใหม่ — รีเซ็ตสถานะทั้งหมด 🌅");
+    document.getElementById("stoppedCount").textContent=Math.floor(Math.random()*4)+1;
+  };
+
+  /* ---------- init random states ---------- */
+  AGENTS.forEach(a=>setState(a, STATES[Math.floor(Math.random()*STATES.length)]));
+  refreshStats();
+})();
+</script>
+</body>
+</html>
